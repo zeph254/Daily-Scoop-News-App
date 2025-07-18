@@ -19,7 +19,11 @@ A modern newsletter subscription system built with React, Firebase, and EmailJS.
 
 ## Setup Instructions
 
+git clone https://github.com/zeph254/daily-scoop-ke.git
+cd daily-scoop-ke
+
 ### 1. Firebase Configuration
+
 
 #### Install CLI
 npm install -g firebase-tools
