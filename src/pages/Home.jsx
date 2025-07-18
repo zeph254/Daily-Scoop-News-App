@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-// Double check this path matches your project
 import NewsCard from '../components/NewsCard.jsx';
-
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function HomePage() {
@@ -12,7 +10,8 @@ export default function HomePage() {
   const [totalResults, setTotalResults] = useState(0);
   const [error, setError] = useState(null);
 
-  const API_KEY = import.meta.env.VITE_NEWSAPI_KEY;
+  // Replace with your NewsData.io API key
+  const API_KEY = import.meta.env.VITE_NEWSDATA_KEY;
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -22,17 +21,44 @@ export default function HomePage() {
         
         let url;
         if (searchQuery) {
-          url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&sortBy=publishedAt&pageSize=30&apiKey=${API_KEY}`;
+          url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&q=${encodeURIComponent(searchQuery)}&language=en`;
         } else {
-          url = `https://newsapi.org/v2/top-headlines?category=${activeCategory}&country=us&pageSize=30&apiKey=${API_KEY}`;
+          // Map your existing categories to NewsData.io's categories
+          const categoryMap = {
+            general: '',
+            business: 'business',
+            technology: 'technology',
+            science: 'science',
+            health: 'health',
+            sports: 'sports',
+            entertainment: 'entertainment'
+          };
+          
+          const newsdataCategory = categoryMap[activeCategory] || '';
+          url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&language=en${newsdataCategory ? `&category=${newsdataCategory}` : ''}`;
         }
         
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.status === "ok") {
-          setTrendingNews(data.articles);
-          setTotalResults(data.totalResults);
+        if (data.status === "success") {
+          // Transform NewsData.io response to match your existing structure
+          const formattedArticles = data.results.map(article => ({
+            ...article,
+            // Map NewsData.io fields to your expected fields
+            title: article.title,
+            description: article.description,
+            url: article.link,
+            urlToImage: article.image_url || 'https://via.placeholder.com/800x400?text=No+Image',
+            publishedAt: article.pubDate,
+            source: {
+              name: article.source_id || 'Unknown Source'
+            },
+            content: article.content
+          }));
+          
+          setTrendingNews(formattedArticles);
+          setTotalResults(data.totalResults || formattedArticles.length);
         } else {
           throw new Error(data.message || 'Failed to fetch news');
         }
@@ -46,12 +72,18 @@ export default function HomePage() {
 
     // Add debounce to prevent too many API calls while typing
     const timer = setTimeout(() => {
-      fetchNews();
+      if (API_KEY) {
+        fetchNews();
+      } else {
+        setError('API key is not configured');
+        setLoading(false);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
   }, [activeCategory, searchQuery, API_KEY]);
 
+  // Your existing categories
   const categories = [
     { id: 'general', name: 'Top Stories' },
     { id: 'business', name: 'Business' },
@@ -153,7 +185,7 @@ export default function HomePage() {
                 <div className="md:flex-shrink-0 md:w-2/3">
                   <img 
                     className="h-full w-full object-cover md:h-96" 
-                    src={trendingNews[0].urlToImage || 'https://via.placeholder.com/800x400?text=No+Image'} 
+                    src={trendingNews[0].urlToImage} 
                     alt={trendingNews[0].title} 
                     onError={(e) => {
                       e.target.src = 'https://via.placeholder.com/800x400?text=No+Image';
