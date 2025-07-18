@@ -14,61 +14,59 @@ export default function HomePage() {
   const API_KEY = import.meta.env.VITE_NEWSDATA_KEY;
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        let url;
-        if (searchQuery) {
-          url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&q=${encodeURIComponent(searchQuery)}&language=en`;
-        } else {
-          // Map your existing categories to NewsData.io's categories
-          const categoryMap = {
-            general: '',
-            business: 'business',
-            technology: 'technology',
-            science: 'science',
-            health: 'health',
-            sports: 'sports',
-            entertainment: 'entertainment'
-          };
-          
-          const newsdataCategory = categoryMap[activeCategory] || '';
-          url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&language=en${newsdataCategory ? `&category=${newsdataCategory}` : ''}`;
-        }
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === "success") {
-          // Transform NewsData.io response to match your existing structure
-          const formattedArticles = data.results.map(article => ({
-            ...article,
-            // Map NewsData.io fields to your expected fields
-            title: article.title,
-            description: article.description,
-            url: article.link,
-            urlToImage: article.image_url || 'https://via.placeholder.com/800x400?text=No+Image',
-            publishedAt: article.pubDate,
-            source: {
-              name: article.source_id || 'Unknown Source'
-            },
-            content: article.content
-          }));
-          
-          setTrendingNews(formattedArticles);
-          setTotalResults(data.totalResults || formattedArticles.length);
-        } else {
-          throw new Error(data.message || 'Failed to fetch news');
-        }
-      } catch (error) {
-        console.error("Error fetching news:", error);
-        setError(error.message || 'Failed to load news. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+        const fetchNews = async () => {
+          try {
+            setLoading(true);
+            setError(null);
+            
+            let url;
+            if (searchQuery) {
+              url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&q=${encodeURIComponent(searchQuery)}&country=ke&language=en`;
+            } else {
+              const categoryMap = {
+                general: 'top',
+                business: 'business',
+                technology: 'technology',
+                science: 'science',
+                health: 'health',
+                sports: 'sports',
+                entertainment: 'entertainment'
+              };
+              
+              const newsdataCategory = categoryMap[activeCategory] || 'top';
+              url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&country=ke&language=en&category=${newsdataCategory}`;
+            }
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.status === "success") {
+              const formattedArticles = data.results.map(article => ({
+                title: article.title,
+                description: article.description || 'No description available',
+                url: article.link,
+                urlToImage: article.image_url || 'https://via.placeholder.com/800x400?text=No+Image',
+                publishedAt: article.pubDate,
+                source: {
+                  name: article.source_name || 'Unknown Source'
+                },
+                content: article.content.includes("ONLY AVAILABLE") ? 
+                  "Full content requires subscription" : 
+                  article.content
+              }));
+              
+              setTrendingNews(formattedArticles);
+              setTotalResults(data.totalResults || formattedArticles.length);
+            } else {
+              throw new Error(data.message || 'Failed to fetch news');
+            }
+          } catch (error) {
+            console.error("Error fetching news:", error);
+            setError(error.message || 'Failed to load news. Please try again later.');
+          } finally {
+            setLoading(false);
+          }
+        };
 
     // Add debounce to prevent too many API calls while typing
     const timer = setTimeout(() => {
