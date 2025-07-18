@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 // Double check this path matches your project
-import NewsCard from '../components/Newscard.jsx';
+import NewsCard from '../components/NewsCard.jsx';
+
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function HomePage() {
