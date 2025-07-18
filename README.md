@@ -80,3 +80,5 @@ service cloud.firestore {
 }
 
 ## Live link to the website 
+
+https://daily-scoop-news-app-9615.vercel.app/
