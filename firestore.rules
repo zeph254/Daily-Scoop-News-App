@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /subscribers/{subscriber} {
+      allow create: if true; // Allow anyone to subscribe
+      allow read, write: if false; // Block other operations
+    }
+  }
+}
